@@ -86,3 +86,7 @@ supersedes: travel-policy-2019   # hides the older document unless -include-supe
 gofmt -l . && go vet ./... && go test -race -cover ./...
 go test ./internal/rag -run '^$' -fuzz '^FuzzScreen$' -fuzztime 50000x
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE).

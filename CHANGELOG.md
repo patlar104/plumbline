@@ -20,6 +20,7 @@ First version.
   and a grader-threshold sweep; 22 test cases on a fictional corpus.
 - Command-line tool: `ask`, `eval`, `stats`.
 - CI on Linux, macOS and Windows: format, vet, tests, evaluation gate, fuzzing.
+- MIT license.
 
 ### Fixed during review
 - Superseded documents outranked current ones.
