@@ -4,7 +4,7 @@ Thanks for helping. Small, focused pull requests are easiest to review.
 
 ## Setup
 
-You need Go 1.24 or newer. CI also tests the current stable release.
+You need Go 1.26 or newer, the oldest release still receiving security fixes. CI also tests the current stable release.
 [golangci-lint](https://golangci-lint.run/welcome/install/) v2 is needed for `make lint`.
 
 ```sh
