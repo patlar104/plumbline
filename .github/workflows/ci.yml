@@ -1,0 +1,54 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Format
+        shell: bash
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then echo "Run gofmt on:"; echo "$unformatted"; exit 1; fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then go test -race -cover ./...; else go test -cover ./...; fi
+
+      - name: Evaluation gate
+        run: go run ./cmd/ragloop eval -corpus testdata/corpus -cases testdata/eval.jsonl -web testdata/web.json -deny-domains evil.example.com -allow-domains iso.org
+
+  fuzz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Fuzz
+        run: |
+          go test ./internal/rag -run '^$' -fuzz '^FuzzScreen$' -fuzztime 50000x
+          go test ./internal/rag -run '^$' -fuzz '^FuzzParseAndChunk$' -fuzztime 5000x
+          go test ./internal/rag -run '^$' -fuzz '^FuzzCheckGrounded$' -fuzztime 30000x

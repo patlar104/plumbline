@@ -1,0 +1,16 @@
+# Build output
+/ragloop
+/ragloop.exe
+*.test
+*.out
+coverage.*
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Local secrets
+.env
+.env.*
