@@ -366,11 +366,15 @@ func TestLRU(t *testing.T) {
 
 func TestBudget(t *testing.T) {
 	b := NewBudget(2, 1)
-	if !b.TakeLLM() || !b.TakeLLM() || b.TakeLLM() {
-		t.Error("model budget not enforced")
+	for i, want := range []bool{true, true, false} {
+		if got := b.TakeLLM(); got != want {
+			t.Errorf("TakeLLM call %d = %t, want %t", i+1, got, want)
+		}
 	}
-	if !b.TakeWeb() || b.TakeWeb() {
-		t.Error("web budget not enforced")
+	for i, want := range []bool{true, false} {
+		if got := b.TakeWeb(); got != want {
+			t.Errorf("TakeWeb call %d = %t, want %t", i+1, got, want)
+		}
 	}
 	if l, w := b.Used(); l != 2 || w != 1 {
 		t.Errorf("Used = %d,%d", l, w)

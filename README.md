@@ -80,11 +80,34 @@ supersedes: travel-policy-2019   # hides the older document unless -include-supe
   failure modes are handled, not that the system is good in general. Add cases from
   real questions before trusting the numbers.
 
-## Checks
+## Development
 
 ```sh
-gofmt -l . && go vet ./... && go test -race -cover ./...
-go test ./internal/rag -run '^$' -fuzz '^FuzzScreen$' -fuzztime 50000x
+make check      # format check, vet, lint, tests, evaluation gate (same as CI)
+make race fuzz  # race detector; short fuzz run
+make help       # every target
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the commands without `make`.
+
+## Releases
+
+Push a tag such as `v0.2.0`. The release workflow tests, builds Linux, macOS and
+Windows binaries, publishes the GitHub Release with checksums, and attaches signed
+build provenance. To check a downloaded archive came from this repository's workflow:
+
+```sh
+gh attestation verify ragloop_<version>_<os>_<arch>.tar.gz --repo <owner>/ragloop
+```
+
+## Repository settings
+
+Branch protection, private vulnerability reporting and security alerts are settings,
+not files. After the first push, run once (it prints the changes; `--apply` makes them):
+
+```sh
+scripts/github-setup.sh            # dry run
+scripts/github-setup.sh --apply    # add --require-checks to require PRs and green CI
 ```
 
 ## License

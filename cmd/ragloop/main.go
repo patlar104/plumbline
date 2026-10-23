@@ -38,6 +38,7 @@ const usage = `usage:
   ragloop ask   -corpus DIR [flags] "question"
   ragloop eval  -corpus DIR -cases FILE [flags]
   ragloop stats -corpus DIR
+  ragloop version
 Run "ragloop <command> -h" for flags.
 Set ANTHROPIC_API_KEY to use Claude for routing, grading and generation;
 without it every stage runs on its offline stand-in.`
@@ -56,6 +57,9 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		code, err = cmdEval(ctx, args[1:], stdout, stderr)
 	case "stats":
 		err = cmdStats(args[1:], stdout, stderr)
+	case "version", "-version", "--version":
+		fmt.Fprintln(stdout, versionString())
+		return 0
 	case "-h", "--help", "help":
 		fmt.Fprintln(stdout, usage)
 		return 0
@@ -250,7 +254,9 @@ func cmdEval(ctx context.Context, args []string, stdout, stderr io.Writer) (int,
 			return 0, err
 		}
 	} else {
-		printReport(stdout, rep, *verbose)
+		if err := printReport(stdout, rep, *verbose); err != nil {
+			return 0, err
+		}
 	}
 	if *sweep {
 		rows, err := eval.Sweep(ctx, func(u, l float64) (*rag.Pipeline, error) {
@@ -268,7 +274,9 @@ func cmdEval(ctx context.Context, args []string, stdout, stderr io.Writer) (int,
 			m := r.Metrics
 			fmt.Fprintf(tw, "  %.1f\t%.1f\t%.3f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", r.Upper, r.Lower, r.Score, m.Recall, m.Coverage, m.AbstainAcc, m.Grounded, m.LeakRate)
 		}
-		tw.Flush()
+		if err := tw.Flush(); err != nil {
+			return 0, fmt.Errorf("write sweep table: %w", err)
+		}
 	}
 	if len(violations) > 0 {
 		fmt.Fprintln(stderr, "\nGate FAILED:")
@@ -284,7 +292,7 @@ func cmdEval(ctx context.Context, args []string, stdout, stderr io.Writer) (int,
 	return 0, nil
 }
 
-func printReport(w io.Writer, rep eval.Report, verbose bool) {
+func printReport(w io.Writer, rep eval.Report, verbose bool) error {
 	m := rep.Overall
 	fmt.Fprintf(w, "Cases: %d counted, %d passed\n", m.Cases, m.Passed)
 	fmt.Fprintf(w, "recall %.2f  mrr %.2f  coverage %.2f  abstention %.2f  groundedness %.2f  leak %.2f  route %.2f\n",
@@ -300,7 +308,9 @@ func printReport(w io.Writer, rep eval.Report, verbose bool) {
 		c := rep.ByCategory[k]
 		fmt.Fprintf(tw, "  %s\t%d/%d passed\n", k, c.Passed, c.Cases)
 	}
-	tw.Flush()
+	if err := tw.Flush(); err != nil {
+		return fmt.Errorf("write report: %w", err)
+	}
 	fmt.Fprintln(w)
 	for _, cr := range rep.Cases {
 		status := "PASS"
@@ -329,6 +339,7 @@ func printReport(w io.Writer, rep eval.Report, verbose bool) {
 	if len(rep.UnexpectedPasses) > 0 {
 		fmt.Fprintf(w, "\nNow passing, remove their xfail: %s\n", strings.Join(rep.UnexpectedPasses, ", "))
 	}
+	return nil
 }
 
 func oneLine(s string, n int) string {

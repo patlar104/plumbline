@@ -63,6 +63,18 @@ func TestEvalGate(t *testing.T) {
 	}
 }
 
+func TestVersion(t *testing.T) {
+	code, out, _ := runCLI(t, "version")
+	if code != 0 || !strings.HasPrefix(out, "ragloop ") {
+		t.Fatalf("exit %d: %q", code, out)
+	}
+	defer func(v, c, d string) { version, commit, date = v, c, d }(version, commit, date)
+	version, commit, date = "v1.2.3", "0123456789abcdef0123", "2026-10-23T00:00:00Z"
+	if got := versionString(); !strings.HasPrefix(got, "ragloop v1.2.3 (0123456789ab, 2026-10-23T00:00:00Z) ") {
+		t.Fatalf("stamped version = %q", got)
+	}
+}
+
 func TestStats(t *testing.T) {
 	code, out, _ := runCLI(t, "stats", "-corpus", corpus)
 	if code != 0 || !strings.Contains(out, "documents 10") || !strings.Contains(out, "superseded chunks 1") {

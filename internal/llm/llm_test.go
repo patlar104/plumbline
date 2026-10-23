@@ -46,7 +46,7 @@ func TestCompleteSendsDocumentedRequest(t *testing.T) {
 
 func TestRetriesOverloadThenSucceeds(t *testing.T) {
 	var n atomic.Int32
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		if n.Add(1) == 1 {
 			w.WriteHeader(529)
 			w.Write([]byte(`{"type":"error","error":{"type":"overloaded_error","message":"busy"}}`))
@@ -63,7 +63,7 @@ func TestRetriesOverloadThenSucceeds(t *testing.T) {
 
 func TestClientErrorIsNotRetried(t *testing.T) {
 	var n atomic.Int32
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		n.Add(1)
 		w.WriteHeader(400)
 		w.Write([]byte(`{"type":"error","error":{"type":"invalid_request_error","message":"bad model"}}`))
@@ -81,7 +81,7 @@ func TestClientErrorIsNotRetried(t *testing.T) {
 
 func TestRetriesExhausted(t *testing.T) {
 	var n atomic.Int32
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		n.Add(1)
 		w.WriteHeader(500)
 		w.Write([]byte("plain text failure"))
@@ -94,7 +94,7 @@ func TestRetriesExhausted(t *testing.T) {
 }
 
 func TestEmptyContentAndCancellation(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Write([]byte(`{"content":[]}`))
 	}))
 	defer srv.Close()
@@ -102,7 +102,7 @@ func TestEmptyContentAndCancellation(t *testing.T) {
 		t.Fatal("a response without text must be an error")
 	}
 
-	slow := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	slow := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(503)
 	}))
 	defer slow.Close()

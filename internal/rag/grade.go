@@ -96,10 +96,9 @@ func (g LLMGrader) Grade(ctx context.Context, queries []string, ps []Passage) ([
 	prompt += "\nPassages:\n" + fencePassages(ps)
 	out, err := callModel(ctx, g.Model, llm.Request{System: graderSystem, Prompt: prompt, MaxTokens: 200})
 	if err == nil {
-		if scores, perr := parseScores(out, len(ps)); perr == nil {
+		var scores []float64
+		if scores, err = parseScores(out, len(ps)); err == nil {
 			return scores, nil
-		} else {
-			err = perr
 		}
 	}
 	scores, ferr := g.Fallback.Grade(ctx, queries, ps)

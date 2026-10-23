@@ -37,7 +37,7 @@ type Case struct {
 // LoadCases reads JSON Lines; blank lines and lines starting with # are
 // skipped. Unknown fields and duplicate ids are errors.
 func LoadCases(path string) ([]Case, error) {
-	f, err := os.Open(path)
+	f, err := os.Open(path) //nolint:gosec // G304: the path is the -cases argument; reading it is the point
 	if err != nil {
 		return nil, err
 	}

@@ -144,7 +144,7 @@ type StaticWeb struct{ Pages []WebResult }
 
 // LoadStaticWeb reads a JSON array of {url, title, text} pages.
 func LoadStaticWeb(path string) (*StaticWeb, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: the path is the -web argument; reading it is the point
 	if err != nil {
 		return nil, err
 	}

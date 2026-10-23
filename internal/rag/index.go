@@ -51,7 +51,7 @@ func (h HashEmbedder) Embed(text string) []float32 {
 
 func hashAdd(v []float32, feature string, w float32) {
 	h := fnv.New64a()
-	h.Write([]byte(feature))
+	_, _ = h.Write([]byte(feature)) // hash.Hash.Write never returns an error
 	s := h.Sum64()
 	if s>>63 == 1 {
 		w = -w
