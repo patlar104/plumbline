@@ -141,8 +141,18 @@ func TestInjectionScreenedAndWebFallback(t *testing.T) {
 	}
 }
 
+// waitRouter blocks until the query deadline passes, so a test can expire the
+// deadline deterministically instead of racing the platform timer resolution.
+type waitRouter struct{}
+
+func (waitRouter) Route(ctx context.Context, _ string) (Route, error) {
+	<-ctx.Done()
+	return Route{}, ctx.Err()
+}
+
 func TestDeadlineAndCancellation(t *testing.T) {
-	p := testPipeline(t, Options{}, func(c *Config) { c.Deadline = time.Nanosecond })
+	p := testPipeline(t, Options{}, func(c *Config) { c.Deadline = 10 * time.Millisecond })
+	p.Router = waitRouter{}
 	r := ask(t, p, "How many vacation days do employees get per year?", Filter{})
 	if !r.TimedOut || !r.Abstained {
 		t.Fatalf("expected a timed-out abstention: %+v", r)
