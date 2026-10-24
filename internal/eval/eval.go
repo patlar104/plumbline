@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"ragloop/internal/rag"
+	"github.com/patlar104/plumbline/internal/rag"
 )
 
 // Case is one test question.

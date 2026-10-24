@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"ragloop/internal/llm"
+	"github.com/patlar104/plumbline/internal/llm"
 )
 
 // Grade is the CRAG confidence class for a set of retrieved passages.

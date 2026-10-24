@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"ragloop/internal/llm"
+	"github.com/patlar104/plumbline/internal/llm"
 )
 
 // RouteKind is the retrieval strategy for a question.

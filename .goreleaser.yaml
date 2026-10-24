@@ -1,11 +1,11 @@
 version: 2
 
-project_name: ragloop
+project_name: plumbline
 
 builds:
-  - id: ragloop
-    main: ./cmd/ragloop
-    binary: ragloop
+  - id: plumbline
+    main: ./cmd/plumbline
+    binary: plumbline
     env:
       - CGO_ENABLED=0
     goos: [linux, darwin, windows]

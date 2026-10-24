@@ -125,7 +125,7 @@ func TestFromEnv(t *testing.T) {
 		t.Fatal("no key must mean no client")
 	}
 	t.Setenv("ANTHROPIC_API_KEY", " k ")
-	t.Setenv("RAGLOOP_MODEL", "")
+	t.Setenv("PLUMBLINE_MODEL", "")
 	t.Setenv("ANTHROPIC_BASE_URL", "")
 	c, ok := FromEnv()
 	if !ok || c.APIKey != "k" || c.Model != DefaultModel || c.BaseURL != DefaultBaseURL {

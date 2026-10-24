@@ -50,7 +50,7 @@ func versionString() string {
 	if len(c) > 12 && commit != "" {
 		c = c[:12]
 	}
-	s := "ragloop " + v
+	s := "plumbline " + v
 	if c != "" {
 		s += " (" + c
 		if d != "" {

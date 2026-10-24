@@ -1,4 +1,4 @@
-# ragloop
+# plumbline
 
 A retrieval pipeline prototype: an adaptive router, hybrid search, an optional entity
 graph and summary index, fusion and reranking, a CRAG-style relevance grader with
@@ -10,24 +10,34 @@ tests with no network and no API key. Set `ANTHROPIC_API_KEY` to have Claude do 
 routing, grading and writing; each model stage falls back to its stand-in on any error
 or when the per-question budget runs out.
 
-## Run it
+## Install
 
-Requires Go 1.26 or newer (the oldest Go release still receiving security fixes).
+Download a binary for Linux, macOS or Windows from the
+[releases page](https://github.com/patlar104/plumbline/releases), or with Go 1.26 or newer
+(the oldest Go release still receiving security fixes):
 
 ```sh
-go build -o ragloop ./cmd/ragloop
+go install github.com/patlar104/plumbline/cmd/plumbline@latest
+```
 
-./ragloop stats -corpus testdata/corpus
-./ragloop ask   -corpus testdata/corpus -trace "How many vacation days do employees get per year?"
-./ragloop ask   -corpus testdata/corpus -groups security "Where are the production signing keys stored?"
-./ragloop eval  -corpus testdata/corpus -cases testdata/eval.jsonl \
+## Run it
+
+From a clone of this repository:
+
+```sh
+go build -o plumbline ./cmd/plumbline
+
+./plumbline stats -corpus testdata/corpus
+./plumbline ask   -corpus testdata/corpus -trace "How many vacation days do employees get per year?"
+./plumbline ask   -corpus testdata/corpus -groups security "Where are the production signing keys stored?"
+./plumbline eval  -corpus testdata/corpus -cases testdata/eval.jsonl \
                 -web testdata/web.json -deny-domains evil.example.com -allow-domains iso.org
-./ragloop eval  ... -sweep      # also tune the grader thresholds
+./plumbline eval  ... -sweep      # also tune the grader thresholds
 ```
 
 Exit codes: `0` success, `1` the evaluation gate failed, `2` usage or setup error.
 
-Environment: `ANTHROPIC_API_KEY` (optional), `RAGLOOP_MODEL` (default `claude-haiku-5-5`),
+Environment: `ANTHROPIC_API_KEY` (optional), `PLUMBLINE_MODEL` (default `claude-haiku-5-5`),
 `ANTHROPIC_BASE_URL` (default `https://api.anthropic.com`).
 
 ## Documents
@@ -52,7 +62,7 @@ supersedes: travel-policy-2019   # hides the older document unless -include-supe
 | `internal/rag` | The pipeline and every stage |
 | `internal/llm` | Claude Messages API client with retries |
 | `internal/eval` | Evaluation harness, metric floors, threshold sweep |
-| `cmd/ragloop` | Command-line tool |
+| `cmd/plumbline` | Command-line tool |
 | `testdata` | Fictional corpus, static web pages, 22 test cases |
 
 ## Stand-ins to replace for real use
@@ -97,7 +107,7 @@ Windows binaries, publishes the GitHub Release with checksums, and attaches sign
 build provenance. To check a downloaded archive came from this repository's workflow:
 
 ```sh
-gh attestation verify ragloop_<version>_<os>_<arch>.tar.gz --repo <owner>/ragloop
+gh attestation verify plumbline_<version>_<os>_<arch>.tar.gz --repo patlar104/plumbline
 ```
 
 ## Repository settings

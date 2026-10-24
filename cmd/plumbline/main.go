@@ -1,9 +1,9 @@
-// Command ragloop asks questions over a document folder and evaluates the
+// Command plumbline asks questions over a document folder and evaluates the
 // pipeline against a fixed question set.
 //
-//	ragloop ask   -corpus DIR [flags] "question"
-//	ragloop eval  -corpus DIR -cases FILE [flags]
-//	ragloop stats -corpus DIR
+//	plumbline ask   -corpus DIR [flags] "question"
+//	plumbline eval  -corpus DIR -cases FILE [flags]
+//	plumbline stats -corpus DIR
 //
 // Exit codes: 0 success, 1 evaluation gate failed, 2 usage or setup error.
 package main
@@ -23,9 +23,9 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"ragloop/internal/eval"
-	"ragloop/internal/llm"
-	"ragloop/internal/rag"
+	"github.com/patlar104/plumbline/internal/eval"
+	"github.com/patlar104/plumbline/internal/llm"
+	"github.com/patlar104/plumbline/internal/rag"
 )
 
 func main() {
@@ -35,11 +35,11 @@ func main() {
 }
 
 const usage = `usage:
-  ragloop ask   -corpus DIR [flags] "question"
-  ragloop eval  -corpus DIR -cases FILE [flags]
-  ragloop stats -corpus DIR
-  ragloop version
-Run "ragloop <command> -h" for flags.
+  plumbline ask   -corpus DIR [flags] "question"
+  plumbline eval  -corpus DIR -cases FILE [flags]
+  plumbline stats -corpus DIR
+  plumbline version
+Run "plumbline <command> -h" for flags.
 Set ANTHROPIC_API_KEY to use Claude for routing, grading and generation;
 without it every stage runs on its offline stand-in.`
 
@@ -68,7 +68,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	}
 	if err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
-			fmt.Fprintln(stderr, "ragloop:", err)
+			fmt.Fprintln(stderr, "plumbline:", err)
 		}
 		return 2
 	}
@@ -89,7 +89,7 @@ func addCommon(fs *flag.FlagSet, c *common) {
 	fs.StringVar(&c.web, "web", "", "JSON file of {url,title,text} pages used as an offline web searcher")
 	fs.StringVar(&c.allow, "allow-domains", "", "comma-separated trusted web domains")
 	fs.StringVar(&c.deny, "deny-domains", "", "comma-separated web domains never used")
-	fs.StringVar(&c.model, "model", "", "Claude model name (default $RAGLOOP_MODEL or "+llm.DefaultModel+")")
+	fs.StringVar(&c.model, "model", "", "Claude model name (default $PLUMBLINE_MODEL or "+llm.DefaultModel+")")
 	fs.BoolVar(&c.offline, "offline", false, "ignore ANTHROPIC_API_KEY and use offline stand-ins")
 	fs.IntVar(&c.maxWords, "chunk-words", 120, "maximum words per chunk")
 	fs.Float64Var(&c.cfg.Upper, "upper", c.cfg.Upper, "grader threshold for 'correct'")

@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-// Defaults. The model is configurable with RAGLOOP_MODEL because model
+// Defaults. The model is configurable with PLUMBLINE_MODEL because model
 // names change faster than code.
 const (
 	DefaultBaseURL = "https://api.anthropic.com"
@@ -49,7 +49,7 @@ type Anthropic struct {
 }
 
 // FromEnv builds a client from ANTHROPIC_API_KEY, with optional
-// RAGLOOP_MODEL and ANTHROPIC_BASE_URL. It reports false when no key is set.
+// PLUMBLINE_MODEL and ANTHROPIC_BASE_URL. It reports false when no key is set.
 func FromEnv() (*Anthropic, bool) {
 	key := strings.TrimSpace(os.Getenv("ANTHROPIC_API_KEY"))
 	if key == "" {
@@ -57,7 +57,7 @@ func FromEnv() (*Anthropic, bool) {
 	}
 	return &Anthropic{
 		APIKey:     key,
-		Model:      envOr("RAGLOOP_MODEL", DefaultModel),
+		Model:      envOr("PLUMBLINE_MODEL", DefaultModel),
 		BaseURL:    envOr("ANTHROPIC_BASE_URL", DefaultBaseURL),
 		Version:    DefaultVersion,
 		HTTP:       &http.Client{Timeout: 60 * time.Second},

@@ -11,8 +11,8 @@ EVAL    := -corpus testdata/corpus -cases testdata/eval.jsonl -web testdata/web.
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
 
-build: ## Build ./ragloop
-	$(GO) build -trimpath -o ragloop ./cmd/ragloop
+build: ## Build ./plumbline
+	$(GO) build -trimpath -o plumbline ./cmd/plumbline
 
 test: ## Run tests
 	$(GO) test ./...
@@ -38,7 +38,7 @@ lint: ## golangci-lint (install: https://golangci-lint.run/welcome/install/)
 	$(GOLANGCI_LINT) run ./...
 
 eval: ## Run the evaluation gate
-	$(GO) run ./cmd/ragloop eval $(EVAL)
+	$(GO) run ./cmd/plumbline eval $(EVAL)
 
 fuzz: ## Short fuzz run of every target
 	$(GO) test ./internal/rag -run '^$$' -fuzz '^FuzzScreen$$' -fuzztime 50000x
@@ -54,5 +54,5 @@ snapshot: ## Local release build into dist/ (needs goreleaser)
 check: fmt-check vet lint test eval ## Everything CI checks except fuzz and vuln
 
 clean: ## Remove build output
-	rm -f ragloop ragloop.exe coverage.out
+	rm -f plumbline plumbline.exe coverage.out
 	rm -rf dist

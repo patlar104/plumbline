@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"ragloop/internal/llm"
+	"github.com/patlar104/plumbline/internal/llm"
 )
 
 var now = time.Date(2026, 10, 23, 0, 0, 0, 0, time.UTC)

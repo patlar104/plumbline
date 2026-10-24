@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"ragloop/internal/llm"
+	"github.com/patlar104/plumbline/internal/llm"
 )
 
 // ErrBudget is returned when a model call or web fetch would exceed the

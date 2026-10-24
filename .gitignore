@@ -1,6 +1,6 @@
 # Build output
-/ragloop
-/ragloop.exe
+/plumbline
+/plumbline.exe
 *.test
 *.out
 coverage.*

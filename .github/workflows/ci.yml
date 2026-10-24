@@ -49,7 +49,7 @@ jobs:
           if [ "$RUNNER_OS" = "Linux" ]; then go test -race -cover ./...; else go test -cover ./...; fi
 
       - name: Evaluation gate
-        run: go run ./cmd/ragloop eval -corpus testdata/corpus -cases testdata/eval.jsonl -web testdata/web.json -deny-domains evil.example.com -allow-domains iso.org
+        run: go run ./cmd/plumbline eval -corpus testdata/corpus -cases testdata/eval.jsonl -web testdata/web.json -deny-domains evil.example.com -allow-domains iso.org
 
   lint:
     runs-on: ubuntu-latest

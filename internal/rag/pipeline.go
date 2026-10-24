@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"ragloop/internal/llm"
+	"github.com/patlar104/plumbline/internal/llm"
 )
 
 // Messages returned in place of an answer.
