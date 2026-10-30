@@ -8,12 +8,18 @@ CLAUDE.md, and Codex, Devin and Antigravity read it directly.
 ## Commands
 
 ```sh
+mise install    # Go, golangci-lint, GoReleaser, markdownlint-cli2 from mise.toml
 make check      # gofmt check, vet, golangci-lint, tests, evaluation gate: what CI runs
+make lint-md    # Markdown lint, configured in .markdownlint-cli2.jsonc (not in CI yet)
 make race fuzz  # race detector; short fuzz run
 go test ./internal/rag -run TestCheckGrounded -v   # one test
 ```
 
-Run `make check` before calling a change done. Lint needs golangci-lint v2.
+Run `make check` before calling a change done, and `make lint-md` after editing Markdown.
+Tool versions live in `mise.toml`; keep golangci-lint there in step with `ci.yml`.
+
+Claude Code settings: `.claude/settings.json` and `.claude/hooks/` are shared and
+committed; `.claude/settings.local.json` is personal and ignored.
 
 ## Rules
 

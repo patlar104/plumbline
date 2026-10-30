@@ -3,10 +3,11 @@
 
 GO      ?= go
 GOLANGCI_LINT ?= golangci-lint
+MARKDOWNLINT ?= markdownlint-cli2
 EVAL    := -corpus testdata/corpus -cases testdata/eval.jsonl -web testdata/web.json \
            -deny-domains evil.example.com -allow-domains iso.org
 
-.PHONY: help build test race cover lint fmt fmt-check vet eval fuzz vuln snapshot check clean
+.PHONY: help build test race cover lint lint-md fmt fmt-check vet eval fuzz vuln snapshot check clean
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -36,6 +37,10 @@ vet: ## go vet
 lint: ## golangci-lint (install: https://golangci-lint.run/welcome/install/)
 	@command -v $(GOLANGCI_LINT) >/dev/null 2>&1 || { echo "$(GOLANGCI_LINT) not found; see https://golangci-lint.run/welcome/install/"; exit 1; }
 	$(GOLANGCI_LINT) run ./...
+
+lint-md: ## Lint Markdown (needs markdownlint-cli2; `mise install` provides it)
+	@command -v $(MARKDOWNLINT) >/dev/null 2>&1 || { echo "$(MARKDOWNLINT) not found; run: mise install"; exit 1; }
+	$(MARKDOWNLINT)
 
 eval: ## Run the evaluation gate
 	$(GO) run ./cmd/plumbline eval $(EVAL)
