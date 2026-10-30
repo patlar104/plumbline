@@ -13,8 +13,9 @@ or when the per-question budget runs out.
 ## Install
 
 Download a binary for Linux, macOS or Windows from the
-[releases page](https://github.com/patlar104/plumbline/releases), or with Go 1.26 or newer
-(the oldest Go release still receiving security fixes):
+[releases page](https://github.com/patlar104/plumbline/releases), or with Go 1.26 or newer.
+The code still builds with Go 1.26, but `go.mod` names the Go 1.27.3 toolchain for its
+security fixes, and Go downloads and builds with it unless `GOTOOLCHAIN=local` is set:
 
 ```sh
 go install github.com/patlar104/plumbline/cmd/plumbline@latest

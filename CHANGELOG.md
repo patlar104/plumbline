@@ -4,13 +4,19 @@ All notable changes are recorded here. Versions follow semantic versioning.
 
 ## Unreleased
 
-Nothing yet.
+### Changed
+
+- `go.mod` names the Go 1.27.3 toolchain, so builds from source use it and its
+  security fixes by default. The minimum stays Go 1.26.
+- CI's minimum-version jobs run with `GOTOOLCHAIN=local` and print `go version`, so
+  they test Go 1.26 rather than switching to the newer toolchain.
 
 ## 0.1.0 — 2026-10-23
 
 First version.
 
 ### Added
+
 - Pipeline: adaptive router, hybrid BM25 and vector search, entity graph and summary
   index for multi-hop and corpus-wide questions, reciprocal rank fusion, reranking,
   CRAG-style grading with refine / web / refine+web actions, cited answers,
@@ -37,6 +43,7 @@ First version.
 - MIT license.
 
 ### Fixed during review
+
 - Superseded documents outranked current ones.
 - Compound questions lost half their answer: grading and refinement now score each
   passage against every sub-question.
@@ -48,6 +55,7 @@ First version.
 - Errors writing report tables to the terminal were ignored (found by the linter).
 
 ### Known limitations
+
 - Offline vectors match words, not synonyms (one expected-failure case).
 - The test set is too small to tune the grader thresholds: most settings tie.
 - The Claude client is tested against a local fake server, not the live API.

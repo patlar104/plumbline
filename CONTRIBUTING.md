@@ -4,7 +4,7 @@ Thanks for helping. Small, focused pull requests are easiest to review.
 
 ## Setup
 
-You need Go 1.26 or newer, the oldest release still receiving security fixes. CI also tests the current stable release.
+You need Go 1.26 or newer. `go.mod` also names the Go 1.27.3 toolchain, so by default Go downloads and builds with 1.27.3 for its security fixes; set `GOTOOLCHAIN=local` to build with the Go you have. CI tests the 1.26 minimum (with `GOTOOLCHAIN=local`) and the current stable release.
 [golangci-lint](https://golangci-lint.run/welcome/install/) v2 is needed for `make lint`.
 
 ```sh
