@@ -154,8 +154,10 @@ type GroundResult struct {
 // strip. Sentences that are only citations attach to the sentence before.
 func CheckGrounded(answer string, ev []Evidence, minOverlap float64) GroundResult {
 	byN := map[int]map[string]bool{}
+	negN := map[int]bool{}
 	for _, e := range ev {
 		byN[e.N] = TermSet(e.Text)
+		negN[e.N] = negated(e.Text)
 	}
 	type sent struct {
 		text  string
@@ -197,6 +199,10 @@ func CheckGrounded(answer string, ev []Evidence, minOverlap float64) GroundResul
 				valid = false
 				break
 			}
+			// Stopword removal drops "not", so overlap cannot see a reversal.
+			if negN[n] != negated(s.text) {
+				continue
+			}
 			got := 0
 			for _, t := range s.terms {
 				if have[t] {
@@ -216,6 +222,14 @@ func CheckGrounded(answer string, ev []Evidence, minOverlap float64) GroundResul
 	}
 	return r
 }
+
+var negationRe = regexp.MustCompile(`(?i)\b(?:not|no|never|none|nobody|nothing|neither|nor|cannot)\b|n['’]t\b`)
+
+// negated reports whether a sentence denies its claim rather than asserting
+// it. CheckGrounded only lets a strip support a sentence of the same polarity.
+// It reads the raw text because Tokenize drops "not" and "no" as stopwords.
+// A double negative ("not ineligible") still counts as negated.
+func negated(s string) bool { return negationRe.MatchString(s) }
 
 var codeTokenRe = regexp.MustCompile(`[A-Za-z0-9][A-Za-z0-9_-]{3,}`)
 
