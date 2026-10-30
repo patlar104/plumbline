@@ -91,6 +91,8 @@ supersedes: travel-policy-2019   # hides the older document unless -include-supe
 | `internal/eval` | Evaluation harness, metric floors, threshold sweep |
 | `cmd/plumbline` | Command-line tool |
 | `testdata` | Fictional corpus, static web pages, 22 test cases |
+| `docs/ROADMAP.md` | Unfinished work and known gaps |
+| `AGENTS.md` | Instructions for coding agents (`CLAUDE.md` points to it) |
 
 ## Stand-ins to replace for real use
 

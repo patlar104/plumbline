@@ -36,6 +36,8 @@ opening a pull request that touches ranking, grading or generation:
 
 - Keep the standard-library-only rule: no new dependencies without discussion first.
 - Add a line to `CHANGELOG.md` under "Unreleased" if users would notice the change.
+- Remove an item from `docs/ROADMAP.md` when you finish it; add one for a gap you
+  find but do not fix.
 - CI must pass on Linux, macOS and Windows.
 
 ## Releases
