@@ -4,6 +4,19 @@ All notable changes are recorded here. Versions follow semantic versioning.
 
 ## Unreleased
 
+### Added
+
+- Free local models: `-local-model` or `PLUMBLINE_LOCAL_MODEL` runs routing, grading
+  and writing on a model served by Ollama (or any OpenAI-compatible server at
+  `PLUMBLINE_LOCAL_URL`), with no API key. Startup checks that the server is up and
+  the model downloaded, and falls back to the offline stand-ins with the command to
+  fix it. The default deadline per question is 2 minutes in this mode.
+
+### Fixed
+
+- The groundedness check accepted a sentence that reversed its evidence ("do not
+  get 25 days" citing "get 25 days"), because "not" is a stopword.
+
 ### Changed
 
 - `go.mod` names the Go 1.27.3 toolchain, so builds from source use it and its

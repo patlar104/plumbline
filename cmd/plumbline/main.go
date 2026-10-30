@@ -40,8 +40,9 @@ const usage = `usage:
   plumbline stats -corpus DIR
   plumbline version
 Run "plumbline <command> -h" for flags.
-Set ANTHROPIC_API_KEY to use Claude for routing, grading and generation;
-without it every stage runs on its offline stand-in.`
+Set ANTHROPIC_API_KEY to use Claude for routing, grading and generation,
+or PLUMBLINE_LOCAL_MODEL (or -local-model) to use a free model served by
+Ollama on this machine; with neither, every stage runs on its offline stand-in.`
 
 func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
@@ -77,20 +78,27 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 
 // common holds the flags shared by ask and eval.
 type common struct {
-	corpus, web, allow, deny, model string
-	offline                         bool
-	maxWords                        int
-	cfg                             rag.Config
+	corpus, web, allow, deny, model, localModel string
+	offline                                     bool
+	maxWords                                    int
+	cfg                                         rag.Config
+	fs                                          *flag.FlagSet
 }
+
+// localDeadline replaces the default per-question deadline for a local
+// model, which takes longer per call than the Claude API.
+const localDeadline = 2 * time.Minute
 
 func addCommon(fs *flag.FlagSet, c *common) {
 	c.cfg = rag.DefaultConfig()
+	c.fs = fs
 	fs.StringVar(&c.corpus, "corpus", "", "folder of .md/.txt documents (required)")
 	fs.StringVar(&c.web, "web", "", "JSON file of {url,title,text} pages used as an offline web searcher")
 	fs.StringVar(&c.allow, "allow-domains", "", "comma-separated trusted web domains")
 	fs.StringVar(&c.deny, "deny-domains", "", "comma-separated web domains never used")
 	fs.StringVar(&c.model, "model", "", "Claude model name (default $PLUMBLINE_MODEL or "+llm.DefaultModel+")")
-	fs.BoolVar(&c.offline, "offline", false, "ignore ANTHROPIC_API_KEY and use offline stand-ins")
+	fs.StringVar(&c.localModel, "local-model", "", "local model served by Ollama, such as gemma3:12b (default $PLUMBLINE_LOCAL_MODEL); used instead of Claude")
+	fs.BoolVar(&c.offline, "offline", false, "ignore ANTHROPIC_API_KEY and any local model; use offline stand-ins")
 	fs.IntVar(&c.maxWords, "chunk-words", 120, "maximum words per chunk")
 	fs.Float64Var(&c.cfg.Upper, "upper", c.cfg.Upper, "grader threshold for 'correct'")
 	fs.Float64Var(&c.cfg.Lower, "lower", c.cfg.Lower, "grader threshold below which every passage is 'incorrect'")
@@ -111,7 +119,7 @@ func splitList(s string) []string {
 }
 
 // setup loads the corpus and wires the pipeline factory.
-func (c *common) setup(stderr io.Writer) (*rag.Index, func(rag.Config) (*rag.Pipeline, error), error) {
+func (c *common) setup(ctx context.Context, stderr io.Writer) (*rag.Index, func(rag.Config) (*rag.Pipeline, error), error) {
 	if c.corpus == "" {
 		return nil, nil, errors.New("-corpus is required")
 	}
@@ -134,14 +142,34 @@ func (c *common) setup(stderr io.Writer) (*rag.Index, func(rag.Config) (*rag.Pip
 		}
 		opt.Web = w
 	}
-	if m, ok := llm.FromEnv(); ok && !c.offline {
-		if c.model != "" {
-			m.Model = c.model
+	local, useLocal := llm.LocalFromEnv(c.localModel)
+	claude, useClaude := llm.FromEnv()
+	switch {
+	case c.offline:
+		fmt.Fprintln(stderr, "mode: offline stand-ins")
+	case useLocal:
+		cctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		err := local.Check(cctx)
+		cancel()
+		if err != nil {
+			fmt.Fprintf(stderr, "local model unavailable: %v\nmode: offline stand-ins\n", err)
+			break
 		}
-		opt.Model = m
-		fmt.Fprintf(stderr, "mode: Claude (%s) with offline fallbacks\n", m.Model)
-	} else {
-		fmt.Fprintln(stderr, "mode: offline stand-ins (set ANTHROPIC_API_KEY to use Claude)")
+		opt.Model = local
+		deadlineSet := false
+		c.fs.Visit(func(f *flag.Flag) { deadlineSet = deadlineSet || f.Name == "deadline" })
+		if !deadlineSet {
+			c.cfg.Deadline = localDeadline
+		}
+		fmt.Fprintf(stderr, "mode: local model %s at %s with offline fallbacks\n", local.Model, local.BaseURL)
+	case useClaude:
+		if c.model != "" {
+			claude.Model = c.model
+		}
+		opt.Model = claude
+		fmt.Fprintf(stderr, "mode: Claude (%s) with offline fallbacks\n", claude.Model)
+	default:
+		fmt.Fprintln(stderr, "mode: offline stand-ins (set PLUMBLINE_LOCAL_MODEL for a free local model, or ANTHROPIC_API_KEY for Claude)")
 	}
 	build := func(cfg rag.Config) (*rag.Pipeline, error) { return rag.NewPipeline(ix, cfg, opt) }
 	return ix, build, nil
@@ -167,7 +195,7 @@ func cmdAsk(ctx context.Context, args []string, stdout, stderr io.Writer) error 
 	if *maxAge < 0 {
 		return errors.New("-max-age-days cannot be negative")
 	}
-	_, build, err := c.setup(stderr)
+	_, build, err := c.setup(ctx, stderr)
 	if err != nil {
 		return err
 	}
@@ -233,7 +261,7 @@ func cmdEval(ctx context.Context, args []string, stdout, stderr io.Writer) (int,
 	if err != nil {
 		return 0, err
 	}
-	_, build, err := c.setup(stderr)
+	_, build, err := c.setup(ctx, stderr)
 	if err != nil {
 		return 0, err
 	}

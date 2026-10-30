@@ -7,8 +7,9 @@ It is standard-library Go with no dependencies.
 
 Every model-backed stage has an offline stand-in, so it builds, runs and passes its
 tests with no network and no API key. Set `ANTHROPIC_API_KEY` to have Claude do the
-routing, grading and writing; each model stage falls back to its stand-in on any error
-or when the per-question budget runs out.
+routing, grading and writing, or run a free model on your own machine (below); each
+model stage falls back to its stand-in on any error or when the per-question budget
+runs out.
 
 ## Install
 
@@ -39,7 +40,32 @@ go build -o plumbline ./cmd/plumbline
 Exit codes: `0` success, `1` the evaluation gate failed, `2` usage or setup error.
 
 Environment: `ANTHROPIC_API_KEY` (optional), `PLUMBLINE_MODEL` (default `claude-haiku-5-5`),
-`ANTHROPIC_BASE_URL` (default `https://api.anthropic.com`).
+`ANTHROPIC_BASE_URL` (default `https://api.anthropic.com`), `PLUMBLINE_LOCAL_MODEL`
+(optional), `PLUMBLINE_LOCAL_URL` (default `http://localhost:11434/v1`).
+
+## Free local model
+
+[Ollama](https://ollama.com) runs a model on your own machine, with no key and no cost.
+Install it, download a model, and name it:
+
+```sh
+brew install ollama
+ollama serve &                 # or open the Ollama app
+ollama pull gemma3:12b         # pick a size that fits your memory
+export PLUMBLINE_LOCAL_MODEL=gemma3:12b
+./plumbline ask -corpus testdata/corpus "How many vacation days do employees get per year?"
+```
+
+`-local-model gemma3:12b` does the same for one command. A local model takes priority
+over `ANTHROPIC_API_KEY`; `-offline` ignores both. If Ollama is not running or the model
+is not downloaded, the command says what to run and uses the offline stand-ins.
+
+Any server with the OpenAI-compatible `/v1/chat/completions` API works: point
+`PLUMBLINE_LOCAL_URL` at LM Studio (`http://localhost:1234/v1`) or llama.cpp's server.
+
+Local models are slower than the API, so the default `-deadline` is 2 minutes in this
+mode. Smaller models grade and write less reliably than Claude, so expect more answers
+marked "Unverified".
 
 ## Documents
 
@@ -74,7 +100,7 @@ supersedes: travel-policy-2019   # hides the older document unless -include-supe
 | Reranker | Weighted term coverage (`LexicalReranker`) | A cross-encoder behind `rag.Reranker` |
 | Web search | Fixed pages from a JSON file (`StaticWeb`) | A search API behind `rag.WebSearcher` |
 | Context headers | Title and section heading | Model-written context per chunk |
-| Router, grader, generator | Rules, coverage, extractive quotes | Claude, already wired: set the API key |
+| Router, grader, generator | Rules, coverage, extractive quotes | Claude or a local model, already wired: set the API key or `PLUMBLINE_LOCAL_MODEL` |
 
 ## Known limitations
 

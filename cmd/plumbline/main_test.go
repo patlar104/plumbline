@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -11,6 +14,7 @@ import (
 func runCLI(t *testing.T, args ...string) (int, string, string) {
 	t.Helper()
 	t.Setenv("ANTHROPIC_API_KEY", "") // always test the offline path
+	t.Setenv("PLUMBLINE_LOCAL_MODEL", "")
 	var out, errb bytes.Buffer
 	code := run(context.Background(), args, &out, &errb)
 	return code, out.String(), errb.String()
@@ -46,6 +50,67 @@ func TestAsk(t *testing.T) {
 	}
 	if code != 0 || json.Unmarshal([]byte(out), &res) != nil || !strings.Contains(res.Answer, "vault-prod-3") || !res.Verified {
 		t.Fatalf("json ask: exit %d %q", code, out)
+	}
+}
+
+// fakeOllama answers like a local model server: it routes every question as
+// single, grades every passage relevant and answers by quoting evidence [1].
+func fakeOllama(t *testing.T, model string) *httptest.Server {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/v1/models" {
+			fmt.Fprintf(w, `{"data":[{"id":%q}]}`, model)
+			return
+		}
+		var req struct {
+			Messages []struct{ Content string } `json:"messages"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || len(req.Messages) != 2 {
+			t.Errorf("bad request: %v", err)
+			return
+		}
+		system, prompt := req.Messages[0].Content, req.Messages[1].Content
+		var reply string
+		switch {
+		case strings.HasPrefix(system, "Classify"):
+			reply = `{"kind":"single"}`
+		case strings.HasPrefix(system, "You grade"):
+			reply = "[" + strings.TrimSuffix(strings.Repeat("0.9,", strings.Count(prompt, "<passage ")), ",") + "]"
+		default:
+			_, ev, _ := strings.Cut(prompt, "<evidence n=\"1\"")
+			_, ev, _ = strings.Cut(ev, ">\n")
+			ev, _, _ = strings.Cut(ev, "\n</evidence>")
+			reply = strings.TrimRight(ev, ".") + " [1]."
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"choices": []any{map[string]any{"message": map[string]string{"content": reply}}}})
+	}))
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+func TestAskLocalModel(t *testing.T) {
+	srv := fakeOllama(t, "tiny:1b")
+	t.Setenv("PLUMBLINE_LOCAL_URL", srv.URL+"/v1")
+	code, out, errOut := runCLI(t, "ask", "-corpus", corpus, "-local-model", "tiny:1b", "How many vacation days do employees get per year?")
+	if code != 0 || !strings.Contains(out, "25 days") || strings.Contains(out, "model_calls=0") ||
+		!strings.Contains(errOut, "mode: local model tiny:1b") {
+		t.Fatalf("exit %d\n%s\n%s", code, out, errOut)
+	}
+}
+
+func TestAskLocalModelUnavailable(t *testing.T) {
+	srv := fakeOllama(t, "tiny:1b")
+	t.Setenv("PLUMBLINE_LOCAL_URL", srv.URL+"/v1")
+	code, out, errOut := runCLI(t, "ask", "-corpus", corpus, "-local-model", "other:7b", "How many vacation days do employees get per year?")
+	if code != 0 || !strings.Contains(out, "25 days") || !strings.Contains(out, "model_calls=0") ||
+		!strings.Contains(errOut, "ollama pull other:7b") || !strings.Contains(errOut, "offline") {
+		t.Fatalf("missing model: exit %d\n%s\n%s", code, out, errOut)
+	}
+
+	t.Setenv("PLUMBLINE_LOCAL_URL", "http://127.0.0.1:1/v1")
+	code, _, errOut = runCLI(t, "ask", "-corpus", corpus, "-local-model", "tiny:1b", "How many vacation days do employees get per year?")
+	if code != 0 || !strings.Contains(errOut, "ollama serve") {
+		t.Fatalf("server down: exit %d\n%s", code, errOut)
 	}
 }
 
