@@ -1,0 +1,24 @@
+# Build output
+/plumbline
+/plumbline.exe
+*.test
+*.out
+coverage.*
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Local secrets
+.env
+.env.*
+
+# Claude Code: personal settings and session state stay on this machine;
+# .claude/settings.json and .claude/hooks/ are shared and committed.
+.claude/settings.local.json
+.claude/.cc-writes/
+
+# Release output
+/dist/

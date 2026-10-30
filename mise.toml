@@ -1,0 +1,7 @@
+# Tools for working on plumbline. Run `mise install` once; versions follow CI.
+[tools]
+go = "1.27.3"                      # the toolchain go.mod names
+golangci-lint = "2.15.0"           # pinned in .github/workflows/ci.yml
+goreleaser = "2.19.0"              # the release workflow uses ~> v2
+node = "24.22.1"                   # runs markdownlint-cli2; 24.22.1+ has the Brotli fix (CVE-2026-111497)
+"npm:markdownlint-cli2" = "0.24.0"

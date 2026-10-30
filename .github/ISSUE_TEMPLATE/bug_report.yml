@@ -1,0 +1,35 @@
+name: Bug report
+description: Something gives a wrong answer, crashes or misbehaves
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you ran, what you expected, and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: The exact command, and a small document or test case if the problem is in the answers. Remove anything private.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `plumbline version`
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Mode
+      options:
+        - Offline stand-ins
+        - Claude (ANTHROPIC_API_KEY set)
+    validations:
+      required: true

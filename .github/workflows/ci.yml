@@ -1,0 +1,104 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Actions are pinned to full commit SHAs (a tag can be moved; a SHA cannot).
+# Dependabot keeps the SHAs and the version comments up to date.
+
+jobs:
+  test:
+    name: test (${{ matrix.os }}, go ${{ matrix.go }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go: [minimum, stable] # minimum = the go line in go.mod, not its toolchain line
+    env:
+      # Without this, Go would switch the minimum job to the newer toolchain
+      # that go.mod's toolchain line names, and 1.26 would never be tested.
+      GOTOOLCHAIN: ${{ matrix.go == 'minimum' && 'local' || 'auto' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Read the minimum Go version from go.mod
+        id: gomod
+        shell: bash
+        run: echo "minimum=$(sed -n 's/^go //p' go.mod)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ matrix.go == 'minimum' && steps.gomod.outputs.minimum || 'stable' }}
+      - name: Go version
+        run: go version
+
+      - name: Format
+        shell: bash
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then echo "Run gofmt on:"; echo "$unformatted"; exit 1; fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then go test -race -cover ./...; else go test -cover ./...; fi
+
+      - name: Evaluation gate
+        run: go run ./cmd/plumbline eval -corpus testdata/corpus -cases testdata/eval.jsonl -web testdata/web.json -deny-domains evil.example.com -allow-domains iso.org
+
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version: v2.15.0
+
+  vulnerabilities:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable # releases are built with stable Go, so scan that standard library
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./... # not tracked by Dependabot: bump by hand
+
+  fuzz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Fuzz
+        run: |
+          go test ./internal/rag -run '^$' -fuzz '^FuzzScreen$' -fuzztime 50000x
+          go test ./internal/rag -run '^$' -fuzz '^FuzzParseAndChunk$' -fuzztime 5000x
+          go test ./internal/rag -run '^$' -fuzz '^FuzzCheckGrounded$' -fuzztime 30000x

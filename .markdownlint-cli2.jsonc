@@ -1,0 +1,19 @@
+// Markdown style for this repository. Run: make lint-md
+{
+  "config": {
+    "default": true,
+    // Prose is wrapped by hand; tables, commands and links run longer.
+    "MD013": false,
+    // CHANGELOG repeats "Added" and "Fixed" under every version.
+    "MD024": { "siblings_only": true }
+  },
+  "globs": ["**/*.md"],
+  "gitignore": true,
+  "ignores": [
+    ".remember/**",
+    // Test inputs: their headings and spacing exercise the document parser.
+    "testdata/**",
+    // GitHub shows the PR title above this, so it starts at "##".
+    ".github/pull_request_template.md"
+  ]
+}

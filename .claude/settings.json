@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(go build *)",
+      "Bash(go vet *)",
+      "Bash(go test *)",
+      "Bash(go run ./cmd/plumbline *)",
+      "Bash(gofmt -l *)",
+      "Bash(make build)",
+      "Bash(make test)",
+      "Bash(make vet)",
+      "Bash(make fmt-check)",
+      "Bash(make eval)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr list *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh pr diff *)",
+      "Bash(gh run list *)",
+      "Bash(gh run view *)",
+      "Bash(gh auth status)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(git tag *)",
+      "Bash(git lfs *)",
+      "Bash(gh pr create *)",
+      "Bash(gh pr merge *)",
+      "Bash(gh pr comment *)",
+      "Bash(gh pr review *)",
+      "Bash(gh release *)",
+      "Bash(gh api *)",
+      "Bash(gh repo *)",
+      "Bash(gh workflow *)",
+      "Bash(goreleaser *)",
+      "Bash(make snapshot)",
+      "Bash(make vuln)",
+      "Bash(scripts/github-setup.sh *)"
+    ],
+    "deny": [
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(gh repo delete *)",
+      "Bash(gh release delete *)"
+    ]
+  },
+  "sandbox": {
+    "network": {
+      "allowLocalBinding": true,
+      "allowedDomains": [
+        "github.com",
+        "api.github.com",
+        "proxy.golang.org",
+        "sum.golang.org",
+        "vuln.go.dev"
+      ]
+    },
+    "filesystem": {
+      "allowWrite": [
+        "~/Library/Caches/go-build",
+        "~/go",
+        "~/Library/Caches/golangci-lint"
+      ]
+    }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/preflight.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/long-running.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: standard # errcheck, govet, ineffassign, staticcheck, unused
+  enable:
+    - bodyclose   # HTTP response bodies closed
+    - errorlint   # errors compared with errors.Is/As, wrapped with %w
+    - gosec       # common security mistakes
+    - misspell    # spelling in comments and strings (British and American both accepted)
+    - nolintlint  # //nolint directives must be specific and still needed
+    - revive      # style and naming
+    - unconvert   # redundant conversions
+  settings:
+    revive:
+      rules:
+        - name: exported
+        - name: package-comments
+        - name: var-naming
+        - name: indent-error-flow
+        - name: errorf
+        - name: unused-parameter
+  exclusions:
+    presets:
+      - std-error-handling
+    rules:
+      - path: _test\.go
+        linters: [gosec, errcheck]
+
+issues:
+  # The defaults cap repeats at 3 per issue and 50 per linter, which hides problems.
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
